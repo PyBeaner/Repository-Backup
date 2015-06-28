@@ -28,7 +28,7 @@ def get_user_repos(user=None, only=None, exclude=None):
     repos = r.json()
     for repo in repos:
         if "id" not in repo:
-            print("Invalid user:",user)
+            print("Invalid user:", user)
             return
         repo_name = repo["name"]
         if only:
@@ -43,6 +43,8 @@ def get_user_repos(user=None, only=None, exclude=None):
 
 save_to = config.get("path", "save_to")
 if not save_to:
+    if not os.path.exists("repos"):
+        os.mkdir("repos")
     save_to = "repos"
 
 
