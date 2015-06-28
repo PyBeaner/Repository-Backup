@@ -6,31 +6,45 @@ import os
 import requests
 import threading
 import subprocess
+from configparser import ConfigParser
 
 api_url = "https://api.github.com/"
 github_url = "https://github.com/"
 
+config = ConfigParser()
+config.read("config.ini")
 
-def get_user_repos(user):
+
+def get_user_repos(user=None, only=None, exclude=None):
+    if not user:
+        user = config.get("auth", "github_account")
+        if not user:
+            print("Please specific the owner of the repos")
+            return
     suffix = "users/{}/repos".format(user)
     url = api_url + suffix
     print("fetching", url)
     r = requests.get(url)
     repos = r.json()
-    save_as = open("%s.repos.json" % user, "wt", errors="replace")
-    print(json.dumps(repos), file=save_as)
     for repo in repos:
+        if "id" not in repo:
+            print("Invalid user:",user)
+            return
+        repo_name = repo["name"]
+        if only:
+            if repo_name not in only:
+                continue
+        if exclude:
+            if repo_name in exclude:
+                continue
         repo_fullname = repo["full_name"]
         clone_or_pull_repo(full_name=repo_fullname)
 
 
-from configparser import ConfigParser
-
-config = ConfigParser()
-config.read("config.ini")
 save_to = config.get("path", "save_to")
 if not save_to:
     save_to = "repos"
+
 
 def clone_or_pull_repo(user=None, repo_name=None, full_name=None, save_to=save_to):
     if full_name:
@@ -65,4 +79,4 @@ def pull_repo(repo_name):
 
 
 if __name__ == '__main__':
-    get_user_repos("PyBeaner")
+    get_user_repos("PyBeaner", only=["ChinaAPI"])
